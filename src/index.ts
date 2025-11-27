@@ -1,6 +1,8 @@
 import { httpServerHandler } from "cloudflare:node";
 import { createServer } from "node:http";
 
+interface Env {}
+
 // Create your Node.js HTTP server
 const server = createServer((req, res) => {
   if (req.url === "/") {
@@ -17,5 +19,14 @@ const server = createServer((req, res) => {
 
 server.listen(8080);
 
-// Export the server as a Workers handler
-export default httpServerHandler({ port: 8080 });
+// Export the server as a Workers handler with a scheduled event
+export default {
+  fetch: httpServerHandler({ port: 8080 }).fetch,
+  async scheduled(
+    controller: ScheduledController,
+    env: Env,
+    ctx: ExecutionContext
+  ) {
+    console.log("cron processed");
+  },
+};
