@@ -1,0 +1,611 @@
+{
+  "name": "x-poster",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://news.ycombinator.com/news",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1152, 208],
+      "id": "ca0f3c74-54c5-4d6b-84a9-760be1fb7026",
+      "name": "Fetch HackNews"
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/category/artificial-intelligence/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1152, 400],
+      "id": "3837131c-17c0-4991-af43-09cfd9acd2a2",
+      "name": "Fetch TechCrunch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const system_prompt = `You are a news-savvy X enthusiast who thrives on sharing sharp insights from breaking stories across tech, politics, culture, and beyond. Your mission: Read the supplied markdown-formatted HTML body of a news article (ignore ads, scripts, or fluff—zero in on the core narrative).Digest the key facts, angle, and any gripping twists or debates.Forge ONE post under 280 characters that packs immediate value for scrollers, no link required. Kick off with a straightforward, jargon-free recap of the essential insight, then weave in your raw reaction (jazzed, wary, floored). Go casual with contractions and imperfect grammar. Mimic a genuine humans fired-up dispatch. Ditch emojis, hashtags, or dashes.Tack on the link at the end for deep divers. If the article packs an image, weave it into the post.Output: Solely the post text (plus image if there)—zip else.`\n\nconst char_limit = 30000\n\nconst title = $input.first().json.article_title || $input.first().json.post_title\nconst user_message = `Title: ${title}\n\nContent: ${$input.first().json.content.slice(0, char_limit)}`\n\nreturn { system_prompt, user_message }"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2048, 400],
+      "id": "6189ec7e-41bd-4832-96ff-c75ebc38055b",
+      "name": "Prepare TechCrunch Prompt"
+    },
+    {
+      "parameters": {
+        "content": "## Setup\n> Before running, connect your credentials:\n>\n> 1. Add your **Twitter (X) OAuth** credentials to the Tweet node.\n> 2. Add your **OpenAI API** key to the LLM node.\n> 3. Adjust the Cron schedule based on how often you want to post.\n>    Test once with manual execution before enabling schedule.",
+        "height": 192,
+        "width": 496,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [400, -176],
+      "typeVersion": 1,
+      "id": "984e740d-dfaf-42cf-83cd-1ee9a7da5fec",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### Cron Trigger\n> Controls when the workflow runs.\n> Change the schedule to hourly, every 3 hours, or daily.\n> Example:\n>\n> * Every 2 hours → `0 */2 * * *`\n> * Once daily at 9 AM → `0 9 * * *`",
+        "height": 384,
+        "width": 272,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [616, 176],
+      "typeVersion": 1,
+      "id": "92a1b03c-1409-4493-8429-0124402bee4a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "### Data Sources\n> Each run selects one source to fetch content from.\n\n#### Sources include:\n> * Hacker News → trending discussions\n> * TechCrunch → startup & product news\n> * Yahoo Finance → market & company sentiment\n>   You can add or remove sources depending on what you want your feed to focus on.",
+        "height": 928,
+        "width": 448
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [1088, -176],
+      "typeVersion": 1,
+      "id": "1891a91e-568f-4ef9-adeb-f8951823b8df",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "### Clean & Convert Content\n> This step removes ads, navigation, scripts, and other noise from the webpage.\n\n> The output becomes clean markdown text, which gives the AI clearer context to generate a readable tweet.",
+        "height": 928,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [1552, -176],
+      "typeVersion": 1,
+      "id": "c3a4afd5-018f-4472-8552-6d061581c721",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "### System Prompt\n> This defines the **voice and quality** of the tweet.\n> Edit this if you want:\n>\n> * More professional tone\n> * More casual / conversational tone\n> * More hot-take / edgy style\n>   Keep tweet length under 255 characters for best engagement.",
+        "height": 928,
+        "width": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [1984, -176],
+      "typeVersion": 1,
+      "id": "b0fdd092-3f3f-46b7-ba6a-31024c715481",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "### Tweet Generation (AI)\n> The LLM analyzes the story + context and writes one tweet designed to be natural, concise, and engaging.\n> No emojis or hashtags to avoid a “bot” tone.\n> You can increase creativity by adjusting the **temperature** parameter.",
+        "height": 480,
+        "width": 256
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [2256, 80],
+      "typeVersion": 1,
+      "id": "b8021d95-f090-442b-9f81-dd7043002097",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "### Auto Tweet\n> This publishes the final tweet automatically.\n> If you want to **review before posting**, change this to:\n> → Send to Drafts\n> → Send to Notion / Google Sheet\n> → Or **disable this node** during testing.",
+        "height": 480,
+        "width": 288,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [2528, 80],
+      "typeVersion": 1,
+      "id": "1e9bcd07-5148-437a-87cb-e2887bd0ca0e",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */2 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [704, 400],
+      "id": "e5083ac3-7475-40b0-bb06-8646fd1c6b5b",
+      "name": "Schedule Tweet Interval",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 3,
+        "output": "={{ Math.floor($json.Hour / 2) % 3 }}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [928, 384],
+      "id": "fd6f60c0-da8c-4b5f-b8ab-686552c6476a",
+      "name": "Switch Data Source"
+    },
+    {
+      "parameters": {
+        "url": "https://finance.yahoo.com/topic/crypto/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1152, 592],
+      "id": "3a6b6376-c79a-42f5-9a01-bd60deaad5ed",
+      "name": "Fetch Y Finance"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "data",
+              "cssSelector": ".titleline a",
+              "returnValue": "attribute",
+              "attribute": "href"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [1376, 208],
+      "id": "be969613-ce8d-441b-af20-1c84b73d4f5b",
+      "name": "Get Latest HackerNews"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "data",
+              "cssSelector": ".loop-card__title-link",
+              "returnValue": "attribute",
+              "attribute": "href"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [1376, 400],
+      "id": "f41c8f60-fdf3-41db-9bec-0770c548386f",
+      "name": "Get Latest AI News"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "data",
+              "cssSelector": ".titles",
+              "returnValue": "attribute",
+              "attribute": "href"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [1376, 592],
+      "id": "5f7bbe05-b3b8-47af-996d-e58b95dd8420",
+      "name": "Get Latest Crypto News"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1600, 208],
+      "id": "554537e1-5087-4d8c-a2cf-1fed61c854ef",
+      "name": "Fetch HackerNews Post"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1600, 400],
+      "id": "5de739f2-88af-4a48-8df7-d891cafcf5f0",
+      "name": "Fetch TechCrunch Post"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1600, 592],
+      "id": "03040d1d-1799-48da-b603-a0f5ccfcfb0d",
+      "name": "Fetch Y Finance Post"
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.data }}",
+        "options": {
+          "ignore": "meta, link, nav, a, img, time, script"
+        }
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [1824, 208],
+      "id": "f66bf1e2-660f-4cd1-9676-3929185a451d",
+      "name": "Post Cleanup"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "title",
+              "cssSelector": ".cover-title"
+            },
+            {
+              "key": "content",
+              "cssSelector": ".body"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [1824, 592],
+      "id": "8624e244-1de6-4539-bdf5-375e9b3c16a2",
+      "name": "Get Crypto News"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "content",
+              "cssSelector": ".entry-content"
+            },
+            {
+              "key": "article_title",
+              "cssSelector": ".article-hero__title"
+            },
+            {
+              "key": "post_title",
+              "cssSelector": ".wp-block-post-title"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [1824, 400],
+      "id": "6e400bd1-fbfe-48d4-8012-66e30a970524",
+      "name": "Get AI News"
+    },
+    {
+      "parameters": {
+        "jsCode": "const system_prompt = `You're a high-reputation X Premium user (Tweepcred 100). You craft human-first tweets that hit the algorithm just right — clear, curious, and conversation-sparking.\n\nYou understand Twitter/X’s current algorithm in depth:\n- Long dwell time and scroll-stopping phrasing = huge boost.\n- Replies, quote tweets, and early retweets = viral fuel.\n- Verified users get max reputation — but writing style still matters.\n- Dense, robotic, one-line tweets fail. Natural structure wins.\n\nYour task:\n1. Read the provided content (HTML or markdown). Ignore ads, boilerplate, or nav clutter.\n2. Extract the *one most interesting or resonant idea*. Not a dry summary — the insight that makes someone go “huh” or “wow” or “is that true?”\n3. Write ONE tweet that:\n   - Feels like a smart person casually sharing an idea mid-scroll\n   - Uses light, informal structure — 2 short sentences max per paragraph\n   - Breaks text across 1–3 lines (if helpful) so it’s readable and scannable\n   - Uses contractions (“don’t”, “you’ll”) and skips perfection\n   - Is under 255 characters\n   - Does NOT use hashtags, emojis, or robotic tone\n   - Ends with the source link (space before the URL)\n4. If an image URL is provided, add it on a new line:\n   IMAGE: <image_url>\n\nFinal Output:\n- Just the tweet (with optional image line).\n- No JSON, no bullet points, no “Here’s your tweet:” preamble.\n\nWrite it like a sharp, curious human would.\n`\n\nconst char_limit = 30000\n\nconst user_message =`\nYou’ll be given a Hacker News article with the following fields.\n\nURL:\n ${$('Get Latest HackerNews').first().json.data}\n \nArticle content:\n${$input.first().json.data.slice(0, char_limit)}\n\n\n\nWhat to do:\n- Read the article.\n- Extract the single biggest takeaway or sharpest point.\n- Write one tweet, in a natural, human way — like a founder, dev, or tech-savvy user would casually post it.\n- Break it into 2–3 short lines if that makes it more readable.\n- Add the article link at the end of the tweet (space before it).\n\n\nOutput:\nOnly the tweet text. No explanation, markdown, or JSON.`\n\nreturn { system_prompt, user_message }\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2048, 208],
+      "id": "74a3d5d2-ec42-49ff-aab6-817eca6809bc",
+      "name": "Prepare HackerNews Prompt"
+    },
+    {
+      "parameters": {
+        "jsCode": "const system_prompt = `You are a Web3 founder who trades crypto and stocks. Your job is to take any given content and turn it into one short tweet. Use simple, everyday words that anyone can understand. Keep it under 255 characters. No emojis, no hyphens, no em dashes. Make it sound like a real person talking. Just output the tweet, nothing else.`\n\nconst char_limit = 30000\n\nconst title = $input.first().json.title\nconst user_message = `Title: ${title}\n\nContent: ${$input.first().json.content.slice(0, char_limit)}`\n\nreturn { system_prompt, user_message }"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2048, 592],
+      "id": "06bab818-3cd4-4550-a600-db71262f2a46",
+      "name": "Prepare Y Finance Prompt"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "={{ $json.system_prompt }}"
+            },
+            {
+              "content": "={{ $json.user_message }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [2272, 400],
+      "id": "a31c9601-d91a-4f65-b45b-dfd29f28b397",
+      "name": "Tweet Generation",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.output[0].content[0].text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [2624, 400],
+      "id": "383617e5-cb89-4847-be37-18f49945eb88",
+      "name": "Auto Tweet",
+      "credentials": {}
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Fetch HackNews": {
+      "main": [
+        [
+          {
+            "node": "Get Latest HackerNews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch TechCrunch": {
+      "main": [
+        [
+          {
+            "node": "Get Latest AI News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare TechCrunch Prompt": {
+      "main": [
+        [
+          {
+            "node": "Tweet Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Tweet Interval": {
+      "main": [
+        [
+          {
+            "node": "Switch Data Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Data Source": {
+      "main": [
+        [
+          {
+            "node": "Fetch HackNews",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch TechCrunch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Y Finance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Y Finance": {
+      "main": [
+        [
+          {
+            "node": "Get Latest Crypto News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Latest HackerNews": {
+      "main": [
+        [
+          {
+            "node": "Fetch HackerNews Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Latest AI News": {
+      "main": [
+        [
+          {
+            "node": "Fetch TechCrunch Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Latest Crypto News": {
+      "main": [
+        [
+          {
+            "node": "Fetch Y Finance Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch HackerNews Post": {
+      "main": [
+        [
+          {
+            "node": "Post Cleanup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch TechCrunch Post": {
+      "main": [
+        [
+          {
+            "node": "Get AI News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Y Finance Post": {
+      "main": [
+        [
+          {
+            "node": "Get Crypto News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Cleanup": {
+      "main": [
+        [
+          {
+            "node": "Prepare HackerNews Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Crypto News": {
+      "main": [
+        [
+          {
+            "node": "Prepare Y Finance Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get AI News": {
+      "main": [
+        [
+          {
+            "node": "Prepare TechCrunch Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare HackerNews Prompt": {
+      "main": [
+        [
+          {
+            "node": "Tweet Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Y Finance Prompt": {
+      "main": [
+        [
+          {
+            "node": "Tweet Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tweet Generation": {
+      "main": [
+        [
+          {
+            "node": "Auto Tweet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "38475af8-2008-45e5-91f1-c8518cb8aa55",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7de897db6fbc7fb58e78ecbb97e38045ae0d605d054ce90260b335debf6da26a"
+  },
+  "id": "RdaW3UfGfWy8aejZ",
+  "tags": []
+}
