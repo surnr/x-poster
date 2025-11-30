@@ -58,11 +58,11 @@ This approach guarantees your tweets reflect **current events** and **breaking n
 └───────────────────────┼─────────────────────────────────────────────┘
                         │
                         ▼
-              ┌──────────────────────┐
-              │ Cloudflare AI Gateway│
-              │    (Rate Limiting,   │
-              │   Caching, Analytics)│
-              └──────────┬───────────┘
+              ┌───────────────────────┐
+              │ Cloudflare AI Gateway │
+              │    (Rate Limiting,    │
+              │   Caching, Analytics) │
+              └──────────┬────────────┘
                          │
                          ▼
                 ┌─────────────────┐
@@ -246,7 +246,7 @@ This simulates the scheduled trigger and runs the complete workflow:
 
 **Watch the logs** in your terminal to see the full execution flow!
 
-### 📁 Project Structure
+### Project Structure
 
 ```
 x-poster/
@@ -342,7 +342,7 @@ That's it! Your new source is now in the rotation.
 
 See `DATASOURCE_EXAMPLES.md` for complete examples (Reddit, Product Hunt, Dev.to, Medium, GitHub).
 
-## 🔄 How Rotation Works
+## How Rotation Works
 
 **Formula**: `Math.floor(currentHour / 4) % numberOfSources`
 
