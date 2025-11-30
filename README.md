@@ -2,65 +2,63 @@
 
 An intelligent, modular Cloudflare Workers application that automatically generates and posts engaging tweets from real-time news sources using AI. Built with a plugin-based architecture that makes adding new data sources trivial.
 
-## 🎯 What is X-Poster?
+X-Poster solves a critical challenge: **LLMs are not real-time aware**. While models like GPT-5.1 have knowledge cutoffs, X-Poster bridges this gap by:
 
-X-Poster solves a critical challenge: **LLMs are not real-time aware**. While models like GPT-4 have knowledge cutoffs, X-Poster bridges this gap by:
+1. **Live Context Engineering** — Scrapes fresh content from real-time news sources (HackerNews, TechCrunch, Yahoo Finance).
+2. **Dynamic Prompt Construction** — Injects the most recent article content directly into AI prompts.
+3. **Source-Specific Personas** — Applies tailored AI instructions per source to match voice and context.
+4. **Automatic Posting** — Produces human-like tweets and posts them to Twitter/X every 4 hours.
 
-1. **Live Context Engineering**: Scrapes real-time content from news sources (HackerNews, TechCrunch, Yahoo Finance)
-2. **Dynamic Prompt Construction**: Feeds fresh article content directly into AI prompts
-3. **Source-Specific Personas**: Each data source has custom AI instructions to match the content type
-4. **Automatic Posting**: Generates human-like tweets and posts them to Twitter/X every 4 hours
+This approach guarantees your tweets reflect **current events** and **breaking news**, not outdated model training data.
 
-This approach ensures your tweets are always about **current events** and **breaking news**, not outdated information from LLM training data.
-
-## 🏗️ Architecture Overview
+## Workflow Process
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    Cloudflare Worker (Edge)                         │
 │                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐ │
-│  │                    Cron Trigger (Every 4h)                   │ │
-│  └────────────────────┬─────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                    Cron Trigger (Every 4h)                   │   │
+│  └────────────────────┬─────────────────────────────────────────┘   │
 │                       │                                             │
 │                       ▼                                             │
-│  ┌──────────────────────────────────────────────────────────────┐ │
-│  │              Rotation Service (rotation.ts)                  │ │
-│  │   Selects data source: Math.floor(hour/4) % sources.length  │ │
-│  └────────────────────┬─────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              Rotation Service (rotation.ts)                  │   │
+│  │   Selects data source: Math.floor(hour/4) % sources.length   │   │
+│  └────────────────────┬─────────────────────────────────────────┘   │
 │                       │                                             │
-│         ┌─────────────┼─────────────┐                              │
-│         │             │             │                              │
-│         ▼             ▼             ▼                              │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                        │
-│  │HackerNews│  │TechCrunch│  │  Yahoo   │  (Plugin Architecture) │
-│  │  .ts     │  │  .ts     │  │Finance.ts│                        │
-│  └─────┬────┘  └─────┬────┘  └─────┬────┘                        │
-│        │             │             │                              │
-│        └─────────────┼─────────────┘                              │
-│                      │                                             │
-│                      ▼                                             │
-│  ┌──────────────────────────────────────────────────────────────┐ │
-│  │                 HTML Parser (html-parser.ts)                 │ │
-│  │  Extracts: Title, Content, Links using CSS selectors        │ │
-│  └────────────────────┬─────────────────────────────────────────┘ │
-│                       │                                             │
-│                       ▼                                             │
-│  ┌──────────────────────────────────────────────────────────────┐ │
-│  │           Content Processor (content-processor.ts)           │ │
-│  │  Cleans, truncates (30k chars), validates content           │ │
-│  └────────────────────┬─────────────────────────────────────────┘ │
+│         ┌─────────────┼─────────────┐                               │
+│         │             │             │                               │
+│         ▼             ▼             ▼                               │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐                           │
+│  │HackerNews│  │TechCrunch│  │  Yahoo   │  (Plugin Architecture)    │
+│  │  .ts     │  │  .ts     │  │Finance.ts│                           │
+│  └─────┬────┘  └─────┬────┘  └─────┬────┘                           │
+│        │             │             │                                │
+│        └─────────────┼─────────────┘                                │
+│                      │                                              │
+│                      ▼                                              │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                 HTML Parser (html-parser.ts)                 │   │
+│  │  Extracts: Title, Content, Links using CSS selectors         │   │
+│  └────────────────────┬─────────────────────────────────────────┘   │
 │                       │                                             │
 │                       ▼                                             │
-│  ┌──────────────────────────────────────────────────────────────┐ │
-│  │            AI Gateway Service (ai-gateway.ts)                │ │
-│  │  Constructs: System Prompt + User Message (article content) │ │
-│  └────────────────────┬─────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │           Content Processor (content-processor.ts)           │   │
+│  │  Cleans, truncates (30k chars), validates content            │   │
+│  └────────────────────┬─────────────────────────────────────────┘   │
+│                       │                                             │
+│                       ▼                                             │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │            AI Gateway Service (ai-gateway.ts)                │   │
+│  │  Constructs: System Prompt + User Message (article content)  │   │
+│  └────────────────────┬─────────────────────────────────────────┘   │
 │                       │                                             │
 └───────────────────────┼─────────────────────────────────────────────┘
                         │
                         ▼
-              ┌─────────────────────┐
+              ┌──────────────────────┐
               │ Cloudflare AI Gateway│
               │    (Rate Limiting,   │
               │   Caching, Analytics)│
@@ -70,10 +68,10 @@ This approach ensures your tweets are always about **current events** and **brea
                 ┌─────────────────┐
                 │   OpenAI API    │
                 │   (GPT-4 Turbo) │
-                └────────┬─────────┘
+                └────────┬────────┘
                          │
                          ▼
-                ┌─────────────────┐
+                ┌──────────────────┐
                 │  Generated Tweet │
                 │  (255-280 chars) │
                 └────────┬─────────┘
@@ -83,7 +81,7 @@ This approach ensures your tweets are always about **current events** and **brea
               │ Twitter Client      │
               │ (twitter.ts)        │
               │ OAuth 1.0a Auth     │
-              └──────────┬───────────┘
+              └──────────┬──────────┘
                          │
                          ▼
                   ┌─────────────┐
@@ -92,7 +90,7 @@ This approach ensures your tweets are always about **current events** and **brea
                   └─────────────┘
 ```
 
-## 🧠 Context Engineering Strategy
+## Context Engineering Strategy
 
 ### The Problem
 
@@ -148,31 +146,7 @@ LLMs are trained on data with a cutoff date. They can't know about:
 5. Result: Tweet about current crypto market events
 ```
 
-### Prompt Engineering Pattern
-
-Each data source uses this structure:
-
-```typescript
-{
-  systemPrompt: `
-    Persona definition (who you are)
-    Platform understanding (X/Twitter algorithm)
-    Content guidelines (tone, length, style)
-    Output format (just the tweet, no fluff)
-  `,
-  userMessage: `
-    Title: [Real-time article title]
-    Content: [First 30,000 chars of article]
-
-    Task: Extract key insight and write tweet
-    Link: [source URL]
-  `
-}
-```
-
-The LLM sees **fresh content** every time, ensuring tweets are always about **current events**.
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -186,7 +160,7 @@ The LLM sees **fresh content** every time, ensuring tweets are always about **cu
 #### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/x-poster.git
+git clone https://github.com/surnr/x-poster.git
 cd x-poster
 ```
 
@@ -196,19 +170,20 @@ cd x-poster
 npm install
 ```
 
-#### 3. Configure Secrets (for deployment)
+#### 3. Configure Local .env
+
+Copy the example env file and update values locally:
 
 ```bash
-# OpenAI & AI Gateway
-wrangler secret put OPENAI_API_KEY
-wrangler secret put AI_GATEWAY_ACCOUNT_ID
-wrangler secret put AI_GATEWAY_NAME
-
-# Twitter API Credentials
-wrangler secret put TWITTER_API_KEY
-wrangler secret put TWITTER_API_SECRET
-wrangler secret put TWITTER_ACCESS_TOKEN
-wrangler secret put TWITTER_ACCESS_SECRET
+cp .env.example .env
+# Open .env and fill in your credentials:
+# - OPENAI_API_KEY
+# - AI_GATEWAY_ACCOUNT_ID
+# - AI_GATEWAY_NAME
+# - TWITTER_API_KEY
+# - TWITTER_API_SECRET
+# - TWITTER_ACCESS_TOKEN
+# - TWITTER_ACCESS_SECRET
 ```
 
 #### 4. Start Local Development Server
@@ -219,7 +194,7 @@ npm run dev
 
 The worker will start at `http://localhost:8787`
 
-### 🧪 Testing the Workflow
+### Testing the Workflow
 
 #### Test Endpoints
 
@@ -301,12 +276,11 @@ x-poster/
 ├── wrangler.jsonc          # Cloudflare Workers config
 ├── package.json
 ├── tsconfig.json
-├── QUICKSTART.md           # 5-minute setup guide
 ├── DATASOURCE_EXAMPLES.md  # Examples for new sources
 └── README.md
 ```
 
-## 🔌 Adding New Data Sources
+## Adding New Data Sources
 
 The plugin architecture makes adding sources incredibly easy:
 
@@ -389,44 +363,7 @@ Add more sources and rotation automatically adjusts:
 - 6 sources = changes every 4 hours
 - 8 sources = changes every 3 hours
 
-## 🎨 Key Features
-
-- ✅ **Real-time Context Engineering**: Fresh content injected into AI prompts
-- ✅ **Plugin Architecture**: Add sources without touching core code
-- ✅ **Modular Services**: Rotation, scraping, AI, Twitter all decoupled
-- ✅ **Type-Safe**: Full TypeScript with strict types
-- ✅ **Edge Performance**: Runs on Cloudflare's global network (<100ms)
-- ✅ **Built-in Monitoring**: Status, schedule, and trigger endpoints
-- ✅ **Retry Logic**: Automatic retries for AI and network failures
-- ✅ **Cost-Effective**: Runs on Cloudflare free tier
-
-## 📊 Monitoring & Observability
-
-**Status Endpoint**
-
-```bash
-curl https://your-worker.workers.dev/status
-```
-
-Returns: Current source, next source, time until rotation, total sources
-
-**Schedule Endpoint**
-
-```bash
-curl https://your-worker.workers.dev/schedule
-```
-
-Returns: Next 24 hours of scheduled tweets with timestamps
-
-**Production Logs**
-
-```bash
-wrangler tail
-```
-
-Real-time streaming logs from production worker
-
-## 🚀 Deployment
+## Deployment
 
 ```bash
 npm run deploy
@@ -435,54 +372,6 @@ npm run deploy
 Your worker will be live at `https://x-poster.your-subdomain.workers.dev`
 
 The cron job runs automatically every 4 hours.
-
-## 📚 Documentation
-
-- **[QUICKSTART.md](QUICKSTART.md)** - Complete setup guide (5 minutes)
-- **[DATASOURCE_EXAMPLES.md](DATASOURCE_EXAMPLES.md)** - Ready-to-use source implementations
-- **[SUMMARY.md](SUMMARY.md)** - Project architecture overview
-- **[.env.example](.env.example)** - Environment variables guide
-
-## 🛠️ Development
-
-**Type Check**
-
-```bash
-npm run check
-```
-
-**Generate Types**
-
-```bash
-npm run cf-typegen
-```
-
-**Local Dev**
-
-```bash
-npm run dev
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a new data source or improve existing ones
-3. Ensure TypeScript compiles: `npm run check`
-4. Test locally: `npm run dev`
-5. Submit a pull request
-
-## 📄 License
-
-MIT
-
-## 🙏 Credits
-
-Built with:
-
-- [Cloudflare Workers](https://workers.cloudflare.com/) - Edge computing platform
-- [OpenAI](https://openai.com/) - AI text generation
-- [Cheerio](https://cheerio.js.org/) - HTML parsing
-- [Twitter API v2](https://developer.twitter.com/) - Tweet posting
 
 ---
 
