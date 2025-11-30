@@ -4,7 +4,8 @@
   "description": "Automated tweet generation from news sources using Cloudflare Workers and AI Gateway",
   "private": true,
   "dependencies": {
-    "cheerio": "^1.0.0"
+    "cheerio": "^1.0.0",
+    "openai": "^6.9.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",
